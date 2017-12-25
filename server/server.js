@@ -1,10 +1,11 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
-var {mongoose} = require('../db/mongoose');
-var {Todo} = require('../models/todo');
-var {User} = require('../models/user');
 
+const {User} = require('../models/user');
+const {ObjectID} = require('mongodb');
+const {mongoose} = require('./../db/mongoose');
+const {Todo} = require('./../models/todo');
 
 var app = express();
 
@@ -37,7 +38,22 @@ app.listen(3000, () => {
     console.log('server started on port 3000')
 })
 
+app.get('/todos/:id', (req,res) => {
+    var id = req.params.id;
+    if(!ObjectID.isValid(id)){
+        console.log("ID is invalid");
+        res.status(404).send("invalid ID");
+    }
 
+    Todo.findById(id).then((todoById) => {
+        console.log(todoById);
+        if(!todoById) res.send("No todo object found")
+        res.send({todoById});
+    }).catch((err) => {
+        console.log(err);
+        res.send('Error occured')
+    })
+})
 
 // var newuser = new User({
 //     email: 'akshay.kmr080@gmail.com'
