@@ -6,6 +6,7 @@ const {User} = require('../models/user');
 const {ObjectID} = require('mongodb');
 const {mongoose} = require('./../db/mongoose');
 const {Todo} = require('./../models/todo');
+const port = process.env.PORT || 3000;
 
 var app = express();
 
@@ -33,10 +34,7 @@ app.get('/todos', (req, res) => {
     console.log('unable to save todo');
     res.status(400).send(err);
     })
-})
-app.listen(3000, () => {
-    console.log('server started on port 3000')
-})
+});
 
 app.get('/todos/:id', (req,res) => {
     var id = req.params.id;
@@ -54,6 +52,13 @@ app.get('/todos/:id', (req,res) => {
         res.send('Error occured')
     })
 })
+
+
+app.listen(port, () => {
+    console.log('server started on port '+port);
+})
+
+
 
 // var newuser = new User({
 //     email: 'akshay.kmr080@gmail.com'
