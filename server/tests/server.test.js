@@ -40,7 +40,7 @@ describe('POST /todos', () => {
     it('should not create todo with invalid body data', (done) => {
         request(app).
         post('/todos').
-        send({}).
+        send().
         expect(400).
         end((err, res) => {
             if(err) return done(err);
@@ -51,6 +51,8 @@ describe('POST /todos', () => {
             }).catch((e) => {
                 done(e);
             })
+        }).catch((e) => {
+            done(e);
         })
     });
 
@@ -227,4 +229,56 @@ describe('POST /users', () => {
         expect(400).
         end(done);
     })
-})
+});
+
+describe('POST /users/login', () => {
+    it('should login user and return auth token', (done)=> {
+        var email = users[1].email;
+        var password = users[1].password;
+
+        request(app).
+        post('/users/login').
+        send({email, password: password}).
+        expect(200).
+        // expect((res) => {
+        //     expect(res.headers['x-auth']).toExist()
+        // }).
+        end((err, res) => {
+            if(err) return done(err);
+
+            User.findById(users[1]._id).then((user) => {
+                // expect(user.tokens[0]).toInclude({
+                //     access: 'auth',
+                //     token: res.headers['x-auth']
+                // });
+                if(user)
+                    done();
+
+            }).catch((err) => {
+                done(err);
+            })
+        })
+    });
+
+    it('should not login user', (done)=> {
+        var email = users[1].email;
+        var password = users[1].password;
+        request(app).
+        post('/users/login').
+        send({email, password: password+'1'}).
+        expect(400).
+        expect((res) => {
+            //expect(res.headers['x-auth']).toNotExist()
+        }).
+        end((err, res) => {
+            if(err) done(err);
+
+            User.findById(users[1]._id).then((user) => {
+                expect(user.tokens.length).toBe(0);
+                done();
+            }).catch((err) => {
+                done(err);
+            })
+        })
+    });
+});
