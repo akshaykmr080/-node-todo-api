@@ -262,10 +262,10 @@ describe('POST /users/login', () => {
 
     it('should not login user', (done)=> {
         var email = users[1].email;
-        var password = users[1].password;
+        var password = users[1].password+'abcd';
         request(app).
         post('/users/login').
-        send({email, password: password+'1'}).
+        send({email, password}).
         expect(400).
         expect((res) => {
             //expect(res.headers['x-auth']).toNotExist()
