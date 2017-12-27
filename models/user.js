@@ -85,16 +85,17 @@ UserSchema.statics.findByCredentials = function(email, password){
 
         return new Promise((resolve, reject) => {
             bcrypt.compare(password, user.password, (err, res) => {
-                if(err){
-                    reject();
-                } else {
+                if(res){
                     resolve(user);
+                } else {
+                    reject();
                 }
 
             })
         })
     })
 }
+
 UserSchema.pre('save', function(next) {
     var user = this;
     if(user.isModified('password')){
