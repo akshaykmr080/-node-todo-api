@@ -198,9 +198,9 @@ describe('POST /users', () => {
     //     send({email, password}).
     //     expect(200).
     //     expect((res) => {
-    //         expect(res.headers['x-auth']).toExist()
-    //         expect(res.body._id).toExist();
-    //         expect(res.body.email).toBe(email);
+    //         // expect(res.headers['x-auth']).toNotBe(null)
+    //         // expect(res.body._id).toNotBe(null);
+    //         // expect(res.body.email).toBe(email);
     //     }). 
     //     end((err) => {
     //         if(err){
@@ -282,3 +282,24 @@ describe('POST /users/login', () => {
         })
     });
 });
+
+
+describe('DELETE /users/me/token', () => {
+    it('should remove auth token on logout', (done)=> {
+        request(app).
+        delete('/users/me/token').
+        set('x-auth', users[0].tokens[0].token).
+        expect(200).
+        end((err, res) => {
+            if(err) done(err);
+
+            User.findById(users[0]._id).then((userData) => {
+                console.log(JSON.stringify(userData, undefined, 2));
+                expect(userData.tokens.length).toBe(0);
+                done();
+            }).catch((err) => {
+                done(err);
+            })
+        })
+    })
+})
