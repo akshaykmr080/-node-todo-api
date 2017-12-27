@@ -127,7 +127,7 @@ describe('DELETE /todos/:id', () => {
             }
 
             Todo.findById(hexId).then((todo) => {
-                expect(todo).toBe(null);
+                expect(todo).toBeFalsy();
                 done();
             }).catch((e) => {
                 done(e);
@@ -140,7 +140,18 @@ describe('DELETE /todos/:id', () => {
         delete(`/todos/${hexId}`).
         set('x-auth', users[0].tokens[0].token).
         expect(404). 
-        end(done)
+        end((err, res) => {
+            if(err){
+                return done(err);
+            }
+
+            Todo.findById(hexId).then((todo) => {
+                expect(todo).toBeTruthy();
+                done();
+            }).catch((e) => {
+                done(e);
+            })
+        });
     });
 
     it('should return a 404 if todo not found', (done) => {
@@ -171,6 +182,7 @@ describe('PATCH /todos/:id', () => {
         expect((res) => {
             expect(res.body.todo.text).toBe('updated text from test case');
             expect(res.body.todo.completed).toBe(true);
+            expect(typeof res.body.todo.completedAt).toBe('number');
         }).
         end(done);
     });
@@ -183,7 +195,7 @@ describe('PATCH /todos/:id', () => {
         expect(404).
         end(done);
     });
-    
+
     it('should clear completedAt when completed is not set', (done) => {
         request(app).
         patch(`/todos/${hexId}`).
@@ -193,7 +205,7 @@ describe('PATCH /todos/:id', () => {
         expect((res) => {
             expect(res.body.todo.text).toBe('updated text and set completed to false');
             expect(res.body.todo.completed).toBe(false);
-            expect(res.body.todo.completedAt).toBe(null);
+            expect(res.body.todo.completedAt).toBeFalsy();
         }).
         end(done);
     });
@@ -233,12 +245,18 @@ describe('POST /users', () => {
         post('/users').
         send({email, password}).
         expect(200).
+        expect((res) => {
+            expect(res.headers['x-auth']).toBeTruthy();
+            expect(res.body._id).toBeTruthy();
+            expect(res.body.email).toBe(email);
+        }).
         end((err, res) => {
             if(err){
                 return done(err);
             }
             User.findOne({email}).then((user) => {
-                expect(user.password).toNotBe(password);
+                expect(user).toBeTruthy();
+                expect(user.password).not.toBe(password);
                 done();
             })
         }).catch((err) => {
@@ -272,17 +290,17 @@ describe('POST /users/login', () => {
         post('/users/login').
         send({email, password: password}).
         expect(200).
-        // expect((res) => {
-        //     expect(res.headers['x-auth']).toExist()
-        // }).
+        expect((res) => {
+            expect(res.headers['x-auth']).toBeTruthy();
+        }).
         end((err, res) => {
             if(err) return done(err);
 
             User.findById(users[1]._id).then((user) => {
-                // expect(user.tokens[0]).toInclude({
-                //     access: 'auth',
-                //     token: res.headers['x-auth']
-                // });
+                expect(user.toObject().tokens[1]).toMatchObject({
+                    access: 'auth',
+                    token: res.headers['x-auth']
+                });
                 if(user)
                     done();
 
@@ -300,13 +318,13 @@ describe('POST /users/login', () => {
         send({email, password}).
         expect(400).
         expect((res) => {
-            //expect(res.headers['x-auth']).toNotExist()
+            expect(res.headers['x-auth']).toBeFalsy()
         }).
         end((err, res) => {
             if(err) done(err);
 
             User.findById(users[1]._id).then((user) => {
-                expect(user.tokens.length).toBe(1);
+                expect(user.toObject().tokens.length).toBe(1);
                 done();
             }).catch((err) => {
                 done(err);
